@@ -19,7 +19,7 @@ import bson
 from dessia_common.exports import XLSXWriter
 
 
-from typing import List, Dict, Type, Tuple, Union, Any, \
+from typing import List, Dict, Type, Tuple, Union, Iterator, Any, \
     get_type_hints, get_origin, get_args
 try:
     from typing import TypedDict  # >=3.8
@@ -1183,6 +1183,8 @@ def serialize_typing(typing_):
             return 'Subclass[{}]'.format(type_fullname(args[0]))
         elif origin is MethodType:
             return 'MethodType[{}]'.format(type_fullname(args[0]))
+        # elif origin is collections.abc.Iterator:
+        #     return 'Iterator[{}]'.format(type_fullname(args[0]))
         else:
             msg = 'Serialization of typing {} is not implemented'
             raise NotImplementedError(msg.format(typing_))
