@@ -1173,6 +1173,8 @@ def serialize_typing(typing_):
         elif origin is tuple:
             argnames = ', '.join([type_fullname(a) for a in args])
             return 'Tuple[{}]'.format(argnames)
+        elif origin is collections.Iterator:
+            return 'Iterator[' + type_fullname(args[0]) + ']'
         elif origin is dict:
             key_type = type_fullname(args[0])
             value_type = type_fullname(args[1])
@@ -1191,7 +1193,6 @@ def serialize_typing(typing_):
     if isinstance(typing_, type):
         return full_classname(typing_, compute_for='class')
     return str(typing_)
-    # raise NotImplementedError('{} of type {}'.format(typing_, type(typing_)))
 
 
 def type_from_argname(argname):
@@ -1304,12 +1305,13 @@ def enhanced_get_attr(obj, attr):
     try:
         return getattr(obj, attr)
     except (TypeError, AttributeError):
+        track = tb.format_exc()
         try:
             return obj[attr]
         except TypeError:
             classname = obj.__class__.__name__
             msg = "'{}' object has no attribute '{}'.".format(classname, attr)
-            track = tb.format_exc()
+            track += tb.format_exc()
             raise DeepAttributeError(message=msg, traceback_=track)
 
 
@@ -1461,7 +1463,7 @@ def jsonschema_from_annotation(annotation, jsonschema_element,
                     'type': 'object', 'classes': classnames,
                     'standalone_in_db': standalone
                 })
-        elif origin is list:
+        elif origin in [list, collections.Iterator]:
             # Homogenous sequences
             jsonschema_element[key].update(jsonschema_sequence_recursion(
                 value=typing_, order=order, title=title, editable=editable
@@ -1713,11 +1715,14 @@ def deserialize_argument(type_, argument):
                 except KeyError:
                     # This is not the right class, we should go see the parent
                     classes.remove(children_class)
-        elif origin is list:
+        elif origin in [list, collections.Iterator]:
             # Homogenous sequences (lists)
             sequence_subtype = args[0]
             deserialized_arg = [deserialize_argument(sequence_subtype, arg)
                                 for arg in argument]
+            if origin is collections.Iterator:
+                deserialized_arg = iter(deserialized_arg)
+
         elif origin is tuple:
             # Heterogenous sequences (tuples)
             deserialized_arg = tuple([deserialize_argument(t, arg)
@@ -1849,6 +1854,7 @@ def default_dict(jsonschema):
     dict_ = {}
     datatype = datatype_from_jsonschema(jsonschema)
     if datatype in ['standalone_object', 'embedded_object', 'static_dict']:
+        dict_['object_class'] = jsonschema['classes'][0]
         for property_, jss in jsonschema['properties'].items():
             if 'default_value' in jss:
                 dict_[property_] = jss['default_value']
