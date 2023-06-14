@@ -47,7 +47,6 @@ def prettyname(name: str) -> str:
                 pretty_name += ' '
     return pretty_name
 
-
 def full_classname(object_, compute_for: str = 'instance'):
     """ Get full class name of object_ (module + class name). """
     if compute_for == 'instance':

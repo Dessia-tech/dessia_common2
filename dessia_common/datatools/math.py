@@ -1,8 +1,12 @@
 """ Distances operators for metrics on Datasets. """
 
+from typing import List, Union
+
 import numpy as npy
 from scipy.spatial.distance import mahalanobis
 
+Vector = List[float]
+Matrix = List[Vector]
 
 def diff_list(list_a, list_b):
     """
@@ -19,6 +23,17 @@ def diff_list(list_a, list_b):
     """
     return (a - b for a, b in zip(list_a, list_b))
 
+def maximums(matrix: Union[Vector, Matrix]) -> Vector:
+    """ Compute maximum values and store it in a list of length `len(matrix[0])`. """
+    if not isinstance(matrix[0], list):
+        return [max(matrix)]
+    return [max(column) for column in zip(*matrix)]
+
+def minimums(matrix: Union[Vector, Matrix]) -> Vector:
+    """ Compute minimum values and store it in a list of length `len(matrix[0])`. """
+    if not isinstance(matrix[0], list):
+        return [min(matrix)]
+    return [min(column) for column in zip(*matrix)]
 
 def l1_norm(vector):
     """
@@ -93,7 +108,7 @@ def manhattan_distance(list_a, list_b):
     return l1_norm(diff_list(list_a, list_b))
 
 
-def euclidian_distance(list_a, list_b):
+def euclidean_distance(list_a, list_b):
     """
     Compute the euclidean distance between list_a and list_b, i.e. the l2-norm of difference between list_a and list_b.
 
@@ -155,7 +170,7 @@ def variance(vector):
     :return: the variance of vector
     :rtype: float
     """
-    # faster than euclidian_distance(vector, [mean(vector)] * len(vector))**2 / len(vector)
+    # faster than euclidean_distance(vector, [mean(vector)] * len(vector))**2 / len(vector)
     return float(npy.var(vector))
 
 
@@ -209,7 +224,7 @@ def std(vector):
     :return: the standard deviation of vector
     :rtype: float
     """
-    # faster than euclidian_distance(vector, [mean(vector)] * len(vector)) / math.sqrt(len(vector))
+    # faster than euclidean_distance(vector, [mean(vector)] * len(vector)) / math.sqrt(len(vector))
     return float(npy.std(vector))
 
 
